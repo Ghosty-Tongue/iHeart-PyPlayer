@@ -40,7 +40,7 @@ class IHeartPyPlayer:
         self.freq_search_button = tk.Button(root, text="Search by Frequency", command=self.freq_search)
         self.freq_search_button.pack(pady=10)
 
-        self.info_frame = tk.Frame(root, bd=2, relief=tk.SOLID)  # Add border to frame
+        self.info_frame = tk.Frame(root, bd=2, relief=tk.SOLID)
         self.info_frame.pack(pady=10)
 
         self.logo_label = tk.Label(self.info_frame)
