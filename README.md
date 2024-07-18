@@ -22,17 +22,17 @@ iHeart PyPlayer is a Python application built using Tkinter and VLC to stream an
    git clone https://github.com/Ghosty-Tongue/iHeart-PyPlayer.git
    ```
 2. Go to the Directory
-```
-cd iHeart-PyPlayer
-```
-3. Install dependencies:
+   ```bash
+   cd iHeart-PyPlayer
    ```
+3. Install dependencies:
+   ```bash
    pip install -r requirements.txt
    ```
 
 ## Usage
 1. Run the application:
-   ```
+   ```bash
    python iHeart.py
    ```
 
@@ -44,4 +44,5 @@ cd iHeart-PyPlayer
 Contributions are welcome! Please feel free to fork the repository, make changes, and submit a pull request.
 
 ## License
-This project is licensed under the MIT License - see the LICENSE file for details.
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
