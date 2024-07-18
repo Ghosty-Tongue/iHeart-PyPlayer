@@ -20,10 +20,12 @@ iHeart PyPlayer is a Python application built using Tkinter and VLC to stream an
 1. Clone the repository:
    ```
    git clone https://github.com/Ghosty-Tongue/iHeart-PyPlayer.git
-   cd iHeart-PyPlayer
    ```
-
-2. Install dependencies:
+2. Go to the Directory
+```
+cd iHeart-PyPlayer
+```
+3. Install dependencies:
    ```
    pip install -r requirements.txt
    ```
@@ -31,7 +33,7 @@ iHeart PyPlayer is a Python application built using Tkinter and VLC to stream an
 ## Usage
 1. Run the application:
    ```
-   python main.py
+   python iHeart.py
    ```
 
 2. Select the band (FM, AM, Digital) using the slider.
