@@ -1,7 +1,7 @@
 # iHeart WebPlayer
 
 ## Overview
-iHeart WebPlayer is a web application designed for streaming and managing iHeartRadio stations. It offers a user-friendly interface for listening to and exploring radio stations.
+iHeart WebPlayer is a web application designed for streaming and managing iHeartRadio stations. It features a user-friendly interface for exploring and listening to over 3,700 iHeartRadio stations.
 
 ## Features
 - Browse and select iHeartRadio stations by bands (FM, AM, Digital).
@@ -26,11 +26,16 @@ iHeart WebPlayer is a web application designed for streaming and managing iHeart
 
 3. **Upload Files**:
    - Access the file manager provided by your web hosting service.
-   - Upload the `index.php`, `error.php`, `config.php`, `styles.css`, and other necessary files to the root directory of your website.
+   - Upload the following files to the root directory of your website:
+     - `index.php` (this should be the main API file located outside the Home folder)
+     - `Home/index.php` (the main application file)
+     - `Home/error.php` (error handling file)
+     - `Home/config.php` (configuration file)
+     - `Home/styles.css` (stylesheet)
 
 4. **Configure API Details**:
-   - Open the `config.php` file using the file manager’s editor or a text editor.
-   - Enter the required API details.
+   - Open `Home/config.php` using the file manager’s editor or a text editor.
+   - Enter the required API details, including the URL for the iHeartRadio API, which will be served by `index.php` outside the Home folder.
 
 5. **Check Permissions**:
    - Ensure that the files have the correct permissions set (usually 644 for files and 755 for directories).
@@ -39,7 +44,7 @@ iHeart WebPlayer is a web application designed for streaming and managing iHeart
    - Once uploaded and configured, you can access your web application via the URL provided by your hosting service.
 
 ## Usage
-1. Open your web browser and navigate to the URL of your iHeat WebPlayer.
+1. Open your web browser and navigate to the URL of your iHeart WebPlayer.
 2. Use the navigation buttons to browse and select stations.
 3. Use the search feature to find specific stations by frequency.
 4. Enjoy streaming your favorite iHeartRadio stations!
