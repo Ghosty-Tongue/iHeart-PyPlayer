@@ -4,8 +4,7 @@
 iHeart WebPlayer is a web application designed for streaming and managing iHeartRadio stations. It features a user-friendly interface for exploring and listening to over 3,700 iHeartRadio stations.
 
 ## Features
-- Browse and select iHeartRadio stations by bands (FM, AM, Digital).
-- Search for stations by frequency within FM and AM bands.
+- Search for stations
 - Stream and control playback of station broadcasts.
 - Navigate between stations and view their logos, names, and descriptions.
 - Manage your favorite stations and toggle between light and dark modes.
