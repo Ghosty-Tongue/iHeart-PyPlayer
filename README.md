@@ -1,48 +1,51 @@
-# iHeart PyPlayer
+# iHeart WebPlayer
 
 ## Overview
-iHeart PyPlayer is a Python application built using Tkinter and VLC to stream and display information about iHeartRadio stations.
+iHeart WebPlayer is a web application designed for streaming and managing iHeartRadio stations. It offers a user-friendly interface for listening to and exploring radio stations.
 
 ## Features
-- View and select iHeartRadio stations based on bands (FM, AM, Digital).
+- Browse and select iHeartRadio stations by bands (FM, AM, Digital).
 - Search for stations by frequency within FM and AM bands.
-- Play and stop streaming of station broadcasts.
+- Stream and control playback of station broadcasts.
 - Navigate between stations and view their logos, names, and descriptions.
+- Manage your favorite stations and toggle between light and dark modes.
 
 ## Requirements
-- Python 3.x
-- tkinter (for GUI)
-- requests (for API requests)
-- python-vlc (for media playback)
-- Pillow (PIL) (for image handling)
+- Web browser (latest versions of Chrome, Firefox, Safari, or Edge)
+- PHP 7.4 or higher
 
 ## Installation
-1. Clone the repository:
-   ```
-   git clone https://github.com/Ghosty-Tongue/iHeart-PyPlayer.git
-   ```
-2. Go to the Directory
-   ```bash
-   cd iHeart-PyPlayer
-   ```
-3. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+
+### Using a Web Hosting File Manager
+
+1. **Choose a Web Host**: For a free web hosting service, you can use platforms such as [InfinityFree](https://www.infinityfree.net/), [000WebHost](https://www.000webhost.com/), or [AwardSpace](https://www.awardspace.com/).
+
+2. **Sign Up and Set Up**:
+   - Register for a free account with your chosen web host.
+   - Follow the host’s instructions to set up a new website or project.
+
+3. **Upload Files**:
+   - Access the file manager provided by your web hosting service.
+   - Upload the `index.php`, `error.php`, `config.php`, `styles.css`, and other necessary files to the root directory of your website.
+
+4. **Configure API Details**:
+   - Open the `config.php` file using the file manager’s editor or a text editor.
+   - Enter the required API details.
+
+5. **Check Permissions**:
+   - Ensure that the files have the correct permissions set (usually 644 for files and 755 for directories).
+
+6. **Access Your Web Application**:
+   - Once uploaded and configured, you can access your web application via the URL provided by your hosting service.
 
 ## Usage
-1. Run the application:
-   ```bash
-   python iHeart.py
-   ```
-
-2. Select the band (FM, AM, Digital) using the slider.
-3. Use buttons to search by frequency, play/stop streams, and navigate between stations.
-4. Enjoy listening to iHeartRadio stations!
+1. Open your web browser and navigate to the URL of your iHeat WebPlayer.
+2. Use the navigation buttons to browse and select stations.
+3. Use the search feature to find specific stations by frequency.
+4. Enjoy streaming your favorite iHeartRadio stations!
 
 ## Contributing
-Contributions are welcome! Please feel free to fork the repository, make changes, and submit a pull request.
+Contributions are welcome! Feel free to fork the repository, make changes, and submit a pull request.
 
 ## License
-
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
