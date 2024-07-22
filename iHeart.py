@@ -52,6 +52,9 @@ class IHeartPyPlayer:
         self.station_description_label = tk.Label(self.info_frame, wraplength=400, justify=tk.LEFT)
         self.station_description_label.pack(pady=5)
 
+        self.track_info_label = tk.Label(self.info_frame, font=("Arial", 12))
+        self.track_info_label.pack(pady=5)
+
         self.play_stream_button = tk.Button(root, text="Play Stream", command=self.play_stream)
         self.play_stream_button.pack(pady=10)
 
@@ -103,11 +106,13 @@ class IHeartPyPlayer:
 
         self.station_name_label.config(text=station['name'])
         self.station_description_label.config(text=station['description'])
+        self.fetch_and_display_track_info(station)
 
     def clear_station_info(self):
         self.logo_label.config(image='')
         self.station_name_label.config(text='')
         self.station_description_label.config(text='')
+        self.track_info_label.config(text='Loading...')
 
     def cache_logo(self, station):
         if not os.path.exists(os.path.join(self.data_directory, "images")):
@@ -233,7 +238,48 @@ class IHeartPyPlayer:
         self.show_station_info(station)
         window.destroy()
 
+    def fetch_and_display_track_info(self, station):
+        secure_hls_stream_url = station.get('streams', {}).get('secure_hls_stream', '')
+        if not secure_hls_stream_url:
+            self.track_info_label.config(text='No track info available.')
+            return
+
+        try:
+            response = requests.get(secure_hls_stream_url)
+            response.raise_for_status()
+            m3u8_url = self.extract_m3u8_url(response.text)
+            if not m3u8_url:
+                self.track_info_label.config(text='No track info available.')
+                return
+
+            m3u8_response = requests.get(m3u8_url)
+            m3u8_response.raise_for_status()
+            track_info = self.extract_track_info(m3u8_response.text)
+            self.track_info_label.config(text=f"Now Playing:\n{track_info}")
+        except requests.exceptions.RequestException:
+            self.track_info_label.config(text='Error fetching track info.')
+
+    def extract_m3u8_url(self, text):
+        lines = text.splitlines()
+        for line in lines:
+            if line.endswith(".m3u8"):
+                return line.strip()
+        return None
+
+    def extract_track_info(self, m3u8_text):
+        lines = m3u8_text.splitlines()
+        for line in reversed(lines):
+            if line.startswith("#EXTINF"):
+                try:
+                    info = line.split(',', 1)[1]
+                    title = info.split('title="')[1].split('"')[0]
+                    artist = info.split('artist="')[1].split('"')[0]
+                    return f"{title}\n{artist}"
+                except IndexError:
+                    return "Track info not found"
+        return "Track info not available"
+
 if __name__ == "__main__":
     root = tk.Tk()
-    app = IHeartPyPlayer(root)
+    player = IHeartPyPlayer(root)
     root.mainloop()
