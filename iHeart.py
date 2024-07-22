@@ -92,7 +92,6 @@ class IHeartPyPlayer:
 
         station = filtered_stations[self.current_station_index]
 
-        # Update logo
         logo_path = self.cache_logo(station)
         if logo_path:
             img = Image.open(logo_path)
@@ -102,7 +101,6 @@ class IHeartPyPlayer:
             self.logo_label.config(image=photo)
             self.logo_label.image = photo
 
-        # Update station name and description
         self.station_name_label.config(text=station['name'])
         self.station_description_label.config(text=station['description'])
 
@@ -191,7 +189,20 @@ class IHeartPyPlayer:
         if not freq:
             return
 
-        freq_stations = [station for station in self.stations if station.get('freq') == freq and station.get('band', '').upper() == band.upper()]
+        if band == "AM":
+            try:
+                freq = int(freq)
+            except ValueError:
+                messagebox.showwarning("Invalid Frequency", "Please enter a valid integer frequency for AM band.")
+                return
+        else:
+            try:
+                freq = float(freq)
+            except ValueError:
+                messagebox.showwarning("Invalid Frequency", "Please enter a valid float frequency for FM band.")
+                return
+
+        freq_stations = [station for station in self.stations if station.get('freq') == str(freq) and station.get('band', '').upper() == band.upper()]
         if not freq_stations:
             messagebox.showinfo("No Stations", f"No {band} stations found for frequency {freq}.")
             return
