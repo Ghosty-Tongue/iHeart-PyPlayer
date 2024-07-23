@@ -5,6 +5,8 @@ import pickle
 import os
 import vlc
 from PIL import Image, ImageTk
+import threading
+import io
 
 class IHeartPyPlayer:
     def __init__(self, root):
@@ -239,25 +241,32 @@ class IHeartPyPlayer:
         window.destroy()
 
     def fetch_and_display_track_info(self, station):
+        if station.get('band', '').upper() == 'AM':
+            self.track_info_label.config(text='No track info available for AM stations.')
+            return
+
         secure_hls_stream_url = station.get('streams', {}).get('secure_hls_stream', '')
         if not secure_hls_stream_url:
             self.track_info_label.config(text='No track info available.')
             return
 
-        try:
-            response = requests.get(secure_hls_stream_url)
-            response.raise_for_status()
-            m3u8_url = self.extract_m3u8_url(response.text)
-            if not m3u8_url:
-                self.track_info_label.config(text='No track info available.')
-                return
+        def fetch_track_info():
+            try:
+                response = requests.get(secure_hls_stream_url)
+                response.raise_for_status()
+                m3u8_url = self.extract_m3u8_url(response.text)
+                if not m3u8_url:
+                    self.track_info_label.config(text='No track info available.')
+                    return
 
-            m3u8_response = requests.get(m3u8_url)
-            m3u8_response.raise_for_status()
-            track_info = self.extract_track_info(m3u8_response.text)
-            self.track_info_label.config(text=f"Now Playing:\n{track_info}")
-        except requests.exceptions.RequestException:
-            self.track_info_label.config(text='Error fetching track info.')
+                m3u8_response = requests.get(m3u8_url)
+                m3u8_response.raise_for_status()
+                track_info = self.extract_track_info(m3u8_response.text)
+                self.track_info_label.config(text=f"Now Playing:\n{track_info}")
+            except requests.exceptions.RequestException:
+                self.track_info_label.config(text='Error fetching track info.')
+
+        threading.Thread(target=fetch_track_info).start()
 
     def extract_m3u8_url(self, text):
         lines = text.splitlines()
