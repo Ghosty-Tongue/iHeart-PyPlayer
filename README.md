@@ -8,6 +8,8 @@ iHeart PyPlayer is a Python application built using Tkinter and VLC to stream an
 - Search for stations by frequency within FM and AM bands.
 - Play and stop streaming of station broadcasts.
 - Navigate between stations and view their logos, names, and descriptions.
+- View station statistics including total count and counts by band type.
+- Check for updates to station data and refresh if necessary.
 
 ## Requirements
 - Python 3.x
@@ -18,10 +20,10 @@ iHeart PyPlayer is a Python application built using Tkinter and VLC to stream an
 
 ## Installation
 1. Clone the repository:
-   ```
+   ```bash
    git clone https://github.com/Ghosty-Tongue/iHeart-PyPlayer.git
    ```
-2. Go to the Directory
+2. Navigate to the directory:
    ```bash
    cd iHeart-PyPlayer
    ```
@@ -36,9 +38,12 @@ iHeart PyPlayer is a Python application built using Tkinter and VLC to stream an
    python iHeart.py
    ```
 
-2. Select the band (FM, AM, Digital) using the slider.
-3. Use buttons to search by frequency, play/stop streams, and navigate between stations.
-4. Enjoy listening to iHeartRadio stations!
+2. Use the band slider to select FM, AM, or Digital.
+3. Use the "Search by Frequency" button to find stations by frequency (FM and AM only).
+4. Use the "Play Stream" and "Stop Stream" buttons to control the media playback.
+5. Navigate between stations using the "Previous Station" and "Next Station" buttons.
+6. Click the "Stats" button to view the total number of stations and their distribution by band type.
+7. Use the "Check for Changes" button to update the station data if there are any changes in the API.
 
 ## Contributing
 Contributions are welcome! Please feel free to fork the repository, make changes, and submit a pull request.
