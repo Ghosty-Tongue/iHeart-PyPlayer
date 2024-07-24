@@ -1,12 +1,11 @@
 import tkinter as tk
-from tkinter import messagebox, simpledialog, Toplevel
+from tkinter import messagebox, Toplevel
 import requests
 import pickle
 import os
 import vlc
 from PIL import Image, ImageTk
 import threading
-import io
 
 class IHeartPyPlayer:
     def __init__(self, root):
@@ -16,6 +15,8 @@ class IHeartPyPlayer:
         self.data_directory = "data"
         self.filename = os.path.join(self.data_directory, "stations.dat")
         self.current_station_index = 0
+        self.player = None
+        self.track_info_update_id = None
 
         if not os.path.exists(self.data_directory):
             os.makedirs(self.data_directory)
@@ -25,24 +26,25 @@ class IHeartPyPlayer:
 
         self.stations = self.load_stations()
 
-        self.label = tk.Label(root, text="iHeartRadio Stations")
+        self.create_widgets()
+        self.update_station_display()
+
+    def create_widgets(self):
+        self.label = tk.Label(self.root, text="iHeartRadio Stations")
         self.label.pack(pady=10)
 
-        self.band_label = tk.Label(root, text="Select Band:")
+        self.band_label = tk.Label(self.root, text="Select Category:")
         self.band_label.pack()
 
-        self.band_var = tk.StringVar(value="FM")
-        self.band_slider = tk.Scale(root, from_=0, to=2, orient=tk.HORIZONTAL, showvalue=0, command=self.update_band)
-        self.band_slider.pack()
-        self.band_slider.set(0)
+        self.category_var = tk.StringVar(value="FM")
+        self.category_slider = tk.Scale(self.root, from_=0, to=2, orient=tk.HORIZONTAL, showvalue=0, command=self.update_category)
+        self.category_slider.pack()
+        self.category_slider.set(0)
 
-        self.band_display = tk.Label(root, text="FM")
-        self.band_display.pack(pady=5)
+        self.category_display = tk.Label(self.root, text="FM")
+        self.category_display.pack(pady=5)
 
-        self.freq_search_button = tk.Button(root, text="Search by Frequency", command=self.freq_search)
-        self.freq_search_button.pack(pady=10)
-
-        self.info_frame = tk.Frame(root, bd=2, relief=tk.SOLID)
+        self.info_frame = tk.Frame(self.root, bd=2, relief=tk.SOLID)
         self.info_frame.pack(pady=10)
 
         self.logo_label = tk.Label(self.info_frame)
@@ -57,37 +59,48 @@ class IHeartPyPlayer:
         self.track_info_label = tk.Label(self.info_frame, font=("Arial", 12))
         self.track_info_label.pack(pady=5)
 
-        self.play_stream_button = tk.Button(root, text="Play Stream", command=self.play_stream)
+        self.play_stream_button = tk.Button(self.root, text="Play Stream", command=self.play_stream)
         self.play_stream_button.pack(pady=10)
 
-        self.stop_stream_button = tk.Button(root, text="Stop Stream", command=self.stop_stream)
+        self.stop_stream_button = tk.Button(self.root, text="Stop Stream", command=self.stop_stream)
         self.stop_stream_button.pack(pady=10)
 
-        self.prev_button = tk.Button(root, text="Previous Station", command=self.prev_station)
+        self.prev_button = tk.Button(self.root, text="Previous Station", command=self.prev_station)
         self.prev_button.pack(side=tk.LEFT, padx=20)
 
-        self.next_button = tk.Button(root, text="Next Station", command=self.next_station)
+        self.next_button = tk.Button(self.root, text="Next Station", command=self.next_station)
         self.next_button.pack(side=tk.RIGHT, padx=20)
 
         self.developed_label = tk.Label(self.root, text="Developed by Ghosty-Tongue", anchor='se', fg='grey')
-        self.developed_label.pack(side=tk.BOTTOM, pady=5, padx=5, anchor='se')
+        self.developed_label.pack(side=tk.BOTTOM, pady=5, padx=5)
 
-        self.update_station_display()
+        self.stats_button = tk.Button(self.root, text="Stats", command=self.open_stats_window)
+        self.stats_button.pack(side=tk.TOP, anchor='ne', padx=10, pady=10)
+
+        self.check_changes_button = tk.Button(self.root, text="Check for Changes", command=self.check_for_changes)
+        self.check_changes_button.pack(pady=10)
 
     def fetch_and_save_data(self):
         try:
             response = requests.get("https://api.iheart.com/api/v2/content/liveStations/?limit=999999999")
             response.raise_for_status()
-            stations = response.json()['hits']
-            with open(self.filename, 'wb') as file:
-                pickle.dump(stations, file)
-            messagebox.showinfo("Success", "Stations data fetched and saved successfully.")
+            stations = response.json().get('hits', [])
+            if stations:
+                with open(self.filename, 'wb') as file:
+                    pickle.dump(stations, file)
+                messagebox.showinfo("Success", "Stations data fetched and saved successfully.")
+            else:
+                messagebox.showwarning("No Data", "No station data found.")
         except requests.exceptions.RequestException as e:
             messagebox.showerror("Error", f"Failed to fetch data: {e}")
 
     def load_stations(self):
-        with open(self.filename, 'rb') as file:
-            return pickle.load(file)
+        try:
+            with open(self.filename, 'rb') as file:
+                return pickle.load(file)
+        except (IOError, pickle.PickleError) as e:
+            messagebox.showerror("Error", f"Failed to load stations: {e}")
+            return []
 
     def update_station_display(self):
         filtered_stations = self.filtered_stations()
@@ -102,31 +115,42 @@ class IHeartPyPlayer:
             img = Image.open(logo_path)
             img = img.resize((100, 100), Image.LANCZOS)
             photo = ImageTk.PhotoImage(img)
-
             self.logo_label.config(image=photo)
             self.logo_label.image = photo
 
-        self.station_name_label.config(text=station['name'])
-        self.station_description_label.config(text=station['description'])
-        self.fetch_and_display_track_info(station)
+        self.station_name_label.config(text=station.get('name', 'Unknown'))
+        self.station_description_label.config(text=station.get('description', 'No description available'))
+
+        if station.get('band', '').upper() == 'AM':
+            self.track_info_label.config(text='No track info available for AM stations.')
+        else:
+            self.fetch_and_display_track_info(station)
 
     def clear_station_info(self):
         self.logo_label.config(image='')
-        self.station_name_label.config(text='')
-        self.station_description_label.config(text='')
-        self.track_info_label.config(text='Loading...')
+        self.station_name_label.config(text='No station selected')
+        self.station_description_label.config(text='No description available')
+        self.track_info_label.config(text='Loading track info...')
 
     def cache_logo(self, station):
+        logo_url = station.get('logo')
+        if not logo_url:
+            return None
+
         if not os.path.exists(os.path.join(self.data_directory, "images")):
             os.makedirs(os.path.join(self.data_directory, "images"))
 
-        logo_filename = str(station['id']) + ".png"
+        logo_filename = str(station.get('id', 'unknown')) + ".png"
         logo_path = os.path.join(self.data_directory, "images", logo_filename)
 
         if not os.path.exists(logo_path):
-            response = requests.get(station['logo'])
-            with open(logo_path, 'wb') as file:
-                file.write(response.content)
+            try:
+                response = requests.get(logo_url)
+                response.raise_for_status()
+                with open(logo_path, 'wb') as file:
+                    file.write(response.content)
+            except requests.exceptions.RequestException as e:
+                messagebox.showerror("Error", f"Failed to download logo: {e}")
 
         return logo_path
 
@@ -135,11 +159,12 @@ class IHeartPyPlayer:
             station = self.filtered_stations()[self.current_station_index]
             stream_url = self.get_stream_url(station)
             if stream_url:
-                if hasattr(self, 'player') and self.player is not None:
+                if self.player:
                     self.player.stop()
                 self.player = vlc.MediaPlayer(stream_url)
                 self.player.play()
                 messagebox.showinfo("Info", "Stream is playing.")
+                self.start_periodic_track_info_fetch()
             else:
                 messagebox.showwarning("Warning", "Stream URL not found.")
         except Exception as e:
@@ -147,9 +172,11 @@ class IHeartPyPlayer:
 
     def stop_stream(self):
         try:
-            if hasattr(self, 'player') and self.player is not None:
+            if self.player:
                 self.player.stop()
+                self.player = None
                 messagebox.showinfo("Info", "Stream has been stopped.")
+                self.stop_periodic_track_info_fetch()
         except Exception as e:
             messagebox.showerror("Error", f"Failed to stop stream: {e}")
 
@@ -174,71 +201,26 @@ class IHeartPyPlayer:
                     return url
         return None
 
-    def update_band(self, value):
-        bands = ["FM", "AM", "Digital"]
-        self.band_display.config(text=bands[int(value)])
+    def update_category(self, value):
+        categories = ["FM", "AM", "Digital"]
+        self.category_display.config(text=categories[int(value)])
         self.update_station_display()
 
     def filtered_stations(self):
-        band = self.band_display.cget("text")
-        if band == "Digital":
-            return [station for station in self.stations if 'markets' in station and any('DIGITAL-NAT' in market['name'] for market in station['markets'])]
+        category = self.category_display.cget("text")
+        if category == "Digital":
+            return [station for station in self.stations if self.is_digital_station(station)]
+        elif category == "AM":
+            return [station for station in self.stations if 'am' in station.get('band', '').lower()]
         else:
-            return [station for station in self.stations if station.get('band', '').upper() == band.upper()]
+            return [station for station in self.stations if 'fm' in station.get('band', '').lower()]
 
-    def freq_search(self):
-        band = self.band_display.cget("text")
-        if band not in ["AM", "FM"]:
-            messagebox.showwarning("Invalid Band", "Frequency search is only available for AM and FM bands.")
-            return
-
-        freq = simpledialog.askstring("Frequency Search", f"Enter the frequency for {band} band:")
-        if not freq:
-            return
-
-        if band == "AM":
-            try:
-                freq = int(freq)
-            except ValueError:
-                messagebox.showwarning("Invalid Frequency", "Please enter a valid integer frequency for AM band.")
-                return
-        else:
-            try:
-                freq = float(freq)
-            except ValueError:
-                messagebox.showwarning("Invalid Frequency", "Please enter a valid float frequency for FM band.")
-                return
-
-        freq_stations = [station for station in self.stations if station.get('freq') == str(freq) and station.get('band', '').upper() == band.upper()]
-        if not freq_stations:
-            messagebox.showinfo("No Stations", f"No {band} stations found for frequency {freq}.")
-            return
-
-        if len(freq_stations) == 1:
-            self.show_station_info(freq_stations[0])
-        else:
-            self.show_station_selection_gui(freq_stations)
-
-    def show_station_info(self, station):
-        self.current_station_index = self.stations.index(station)
-        self.update_station_display()
-
-    def show_station_selection_gui(self, stations):
-        station_selection_window = Toplevel(self.root)
-        station_selection_window.title("Select Station")
-
-        label = tk.Label(station_selection_window, text="Multiple stations found. Select one:")
-        label.pack(pady=10)
-
-        station_buttons = []
-        for station in stations:
-            button = tk.Button(station_selection_window, text=station['name'], command=lambda s=station: self.show_station_info_and_close_gui(s, station_selection_window))
-            button.pack(pady=5)
-            station_buttons.append(button)
-
-    def show_station_info_and_close_gui(self, station, window):
-        self.show_station_info(station)
-        window.destroy()
+    def is_digital_station(self, station):
+        markets = station.get('markets', [])
+        for market in markets:
+            if 'type' in market and market['type'] == 'LiveMarketResponse':
+                return True
+        return False
 
     def fetch_and_display_track_info(self, station):
         if station.get('band', '').upper() == 'AM':
@@ -269,26 +251,91 @@ class IHeartPyPlayer:
         threading.Thread(target=fetch_track_info).start()
 
     def extract_m3u8_url(self, text):
-        lines = text.splitlines()
-        for line in lines:
+        for line in text.splitlines():
             if line.endswith(".m3u8"):
                 return line.strip()
         return None
 
     def extract_track_info(self, m3u8_text):
-        lines = m3u8_text.splitlines()
-        for line in reversed(lines):
+        for line in reversed(m3u8_text.splitlines()):
             if line.startswith("#EXTINF"):
                 try:
                     info = line.split(',', 1)[1]
-                    title = info.split('title="')[1].split('"')[0]
-                    artist = info.split('artist="')[1].split('"')[0]
-                    return f"{title}\n{artist}"
+                    title = self.extract_value(info, 'title')
+                    artist = self.extract_value(info, 'artist')
+                    if title == artist:
+                        return f"{title}"
+                    else:
+                        return f"{title}\n{artist}"
                 except IndexError:
                     return "Track info not found"
         return "Track info not available"
 
+    def extract_value(self, info, key):
+        try:
+            return info.split(f'{key}="')[1].split('"')[0]
+        except IndexError:
+            return "Unknown"
+
+    def start_periodic_track_info_fetch(self):
+        if self.track_info_update_id:
+            self.root.after_cancel(self.track_info_update_id)
+        self.track_info_update_id = self.root.after(2000, self.fetch_and_display_track_info, self.filtered_stations()[self.current_station_index])
+
+    def stop_periodic_track_info_fetch(self):
+        if self.track_info_update_id:
+            self.root.after_cancel(self.track_info_update_id)
+            self.track_info_update_id = None
+
+    def open_stats_window(self):
+        stats_window = Toplevel(self.root)
+        stats_window.title("Station Statistics")
+
+        total_stations = len(self.stations)
+        fm_stations = len([station for station in self.stations if 'fm' in station.get('band', '').lower()])
+        am_stations = len([station for station in self.stations if 'am' in station.get('band', '').lower()])
+        digital_stations = len([station for station in self.stations if self.is_digital_station(station)])
+
+        stats_text = (f"Total Stations: {total_stations}\n"
+                      f"FM Stations: {fm_stations}\n"
+                      f"AM Stations: {am_stations}\n"
+                      f"Digital Stations: {digital_stations}")
+
+        stats_label = tk.Label(stats_window, text=stats_text, padx=20, pady=20)
+        stats_label.pack()
+
+        close_button = tk.Button(stats_window, text="Close", command=stats_window.destroy)
+        close_button.pack(pady=10)
+
+    def check_for_changes(self):
+        try:
+            response = requests.get("https://api.iheart.com/api/v2/content/liveStations/?limit=999999999")
+            response.raise_for_status()
+            new_stations = response.json().get('hits', [])
+            new_filename = os.path.join(self.data_directory, "stations_new.dat")
+
+            if new_stations:
+                with open(new_filename, 'wb') as file:
+                    pickle.dump(new_stations, file)
+
+                if not os.path.exists(self.filename) or not self.compare_station_files(self.filename, new_filename):
+                    os.rename(new_filename, self.filename)
+                    self.stations = new_stations
+                    self.update_station_display()
+                    messagebox.showinfo("Info", "Stations data updated successfully.")
+                else:
+                    os.remove(new_filename)
+                    messagebox.showinfo("Info", "No changes detected.")
+            else:
+                messagebox.showwarning("No Data", "No station data found.")
+        except requests.exceptions.RequestException as e:
+            messagebox.showerror("Error", f"Failed to check for changes: {e}")
+
+    def compare_station_files(self, file1, file2):
+        with open(file1, 'rb') as f1, open(file2, 'rb') as f2:
+            return f1.read() == f2.read()
+
 if __name__ == "__main__":
     root = tk.Tk()
-    player = IHeartPyPlayer(root)
+    app = IHeartPyPlayer(root)
     root.mainloop()
