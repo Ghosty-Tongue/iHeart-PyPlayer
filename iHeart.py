@@ -307,29 +307,36 @@ class IHeartPyPlayer:
         close_button = tk.Button(stats_window, text="Close", command=stats_window.destroy)
         close_button.pack(pady=10)
 
-    def check_for_changes(self):
-        try:
-            response = requests.get("https://api.iheart.com/api/v2/content/liveStations/?limit=999999999")
-            response.raise_for_status()
-            new_stations = response.json().get('hits', [])
-            new_filename = os.path.join(self.data_directory, "stations_new.dat")
+def check_for_changes(self):
+    try:
+        response = requests.get("https://api.iheart.com/api/v2/content/liveStations/?limit=999999999")
+        response.raise_for_status()
+        new_stations = response.json()['hits']
 
-            if new_stations:
-                with open(new_filename, 'wb') as file:
-                    pickle.dump(new_stations, file)
+        new_filename = os.path.join(self.data_directory, "stations_new.dat")
+        with open(new_filename, 'wb') as file:
+            pickle.dump(new_stations, file)
 
-                if not os.path.exists(self.filename) or not self.compare_station_files(self.filename, new_filename):
-                    os.rename(new_filename, self.filename)
-                    self.stations = new_stations
-                    self.update_station_display()
-                    messagebox.showinfo("Info", "Stations data updated successfully.")
-                else:
-                    os.remove(new_filename)
-                    messagebox.showinfo("Info", "No changes detected.")
-            else:
-                messagebox.showwarning("No Data", "No station data found.")
-        except requests.exceptions.RequestException as e:
-            messagebox.showerror("Error", f"Failed to check for changes: {e}")
+        if os.path.exists(self.filename):
+            with open(self.filename, 'rb') as file:
+                old_stations = pickle.load(file)
+
+            if new_stations == old_stations:
+                os.remove(new_filename)
+                messagebox.showinfo("Check for Changes", "No changes detected.")
+                return
+        else:
+            old_stations = []
+
+        if os.path.exists(self.filename):
+            os.remove(self.filename)
+
+        os.rename(new_filename, self.filename)
+        messagebox.showinfo("Check for Changes", "Stations data updated successfully.")
+    except requests.exceptions.RequestException as e:
+        messagebox.showerror("Error", f"Failed to check for changes: {e}")
+    except Exception as e:
+        messagebox.showerror("Error", f"An error occurred: {e}")
 
     def compare_station_files(self, file1, file2):
         with open(file1, 'rb') as f1, open(file2, 'rb') as f2:
