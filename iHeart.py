@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import messagebox, Toplevel
+from tkinter import messagebox
 import requests
 import pickle
 import os
@@ -73,12 +73,6 @@ class IHeartPyPlayer:
 
         self.developed_label = tk.Label(self.root, text="Developed by Ghosty-Tongue", anchor='se', fg='grey')
         self.developed_label.pack(side=tk.BOTTOM, pady=5, padx=5)
-
-        self.stats_button = tk.Button(self.root, text="Stats", command=self.open_stats_window)
-        self.stats_button.pack(side=tk.TOP, anchor='ne', padx=10, pady=10)
-
-        self.check_changes_button = tk.Button(self.root, text="Check for Changes", command=self.check_for_changes)
-        self.check_changes_button.pack(pady=10)
 
     def fetch_and_save_data(self):
         try:
@@ -162,6 +156,7 @@ class IHeartPyPlayer:
                 if self.player:
                     self.player.stop()
                 self.player = vlc.MediaPlayer(stream_url)
+                self.player.set_fullscreen(False)
                 self.player.play()
                 messagebox.showinfo("Info", "Stream is playing.")
                 self.start_periodic_track_info_fetch()
@@ -286,61 +281,6 @@ class IHeartPyPlayer:
         if self.track_info_update_id:
             self.root.after_cancel(self.track_info_update_id)
             self.track_info_update_id = None
-
-    def open_stats_window(self):
-        stats_window = Toplevel(self.root)
-        stats_window.title("Station Statistics")
-
-        total_stations = len(self.stations)
-        fm_stations = len([station for station in self.stations if 'fm' in station.get('band', '').lower()])
-        am_stations = len([station for station in self.stations if 'am' in station.get('band', '').lower()])
-        digital_stations = len([station for station in self.stations if self.is_digital_station(station)])
-
-        stats_text = (f"Total Stations: {total_stations}\n"
-                      f"FM Stations: {fm_stations}\n"
-                      f"AM Stations: {am_stations}\n"
-                      f"Digital Stations: {digital_stations}")
-
-        stats_label = tk.Label(stats_window, text=stats_text, padx=20, pady=20)
-        stats_label.pack()
-
-        close_button = tk.Button(stats_window, text="Close", command=stats_window.destroy)
-        close_button.pack(pady=10)
-
-def check_for_changes(self):
-    try:
-        response = requests.get("https://api.iheart.com/api/v2/content/liveStations/?limit=999999999")
-        response.raise_for_status()
-        new_stations = response.json()['hits']
-
-        new_filename = os.path.join(self.data_directory, "stations_new.dat")
-        with open(new_filename, 'wb') as file:
-            pickle.dump(new_stations, file)
-
-        if os.path.exists(self.filename):
-            with open(self.filename, 'rb') as file:
-                old_stations = pickle.load(file)
-
-            if new_stations == old_stations:
-                os.remove(new_filename)
-                messagebox.showinfo("Check for Changes", "No changes detected.")
-                return
-        else:
-            old_stations = []
-
-        if os.path.exists(self.filename):
-            os.remove(self.filename)
-
-        os.rename(new_filename, self.filename)
-        messagebox.showinfo("Check for Changes", "Stations data updated successfully.")
-    except requests.exceptions.RequestException as e:
-        messagebox.showerror("Error", f"Failed to check for changes: {e}")
-    except Exception as e:
-        messagebox.showerror("Error", f"An error occurred: {e}")
-
-    def compare_station_files(self, file1, file2):
-        with open(file1, 'rb') as f1, open(file2, 'rb') as f2:
-            return f1.read() == f2.read()
 
 if __name__ == "__main__":
     root = tk.Tk()
