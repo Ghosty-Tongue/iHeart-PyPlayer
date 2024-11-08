@@ -1,4 +1,6 @@
-# iHeart PyPlayer
+# iHeart PyPlayer (Deprecated)
+
+**This project is now deprecated** Until I find a fix/workaround
 
 ## Overview
 iHeart PyPlayer is a Python application built using Tkinter and VLC to stream and display information about iHeartRadio stations.
